@@ -3,6 +3,7 @@ import { createStore } from 'vuex';
 import authModule from './modules/AuthModule';
 import categoriesModule from './entityModules/CategoriesModule';
 import productsModule from './entityModules/ProductsModule';
+import tagsModule from './entityModules/TagsModule';
 import uiModule from './modules/UIModule';
 
 import createPersistedState from 'vuex-persistedstate';
@@ -16,6 +17,7 @@ const store = createStore({
     authModule,
     categoriesModule,
     productsModule,
+    tagsModule,
     uiModule,
   },
   plugins: [

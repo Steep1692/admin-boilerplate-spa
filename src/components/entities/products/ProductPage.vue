@@ -42,6 +42,22 @@
               data-test="product-categoryId"
             />
           </v-col>
+          <v-col cols="12">
+            <v-combobox
+              :model-value="selectedTags"
+              @update:modelValue="handleTagChange"
+              :items="listTag"
+              item-title="name"
+              item-value="id"
+              chips
+              closable-chips
+              clearable
+              multiple
+              solo
+              label="Tags"
+              variant="outlined"
+            />
+          </v-col>
         </v-row>
       </div>
     </template>
@@ -50,10 +66,11 @@
 
 <script lang="ts">
 import EntityPage from '@/components/common/EntityPage.vue';
-import { defineComponent, onBeforeMount, reactive, watch, computed, ref, Ref } from 'vue';
+import { computed, defineComponent, onBeforeMount, reactive, ref, Ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { Product } from '../../../models/entities/Product';
+import { Tag } from '../../../models/entities/Tag';
 
 interface State {
   entity: Product;
@@ -80,6 +97,7 @@ const Component = defineComponent({
     const product = new Product({});
     const isNew = () => !props.id;
     let listCategory: Ref<string[]> = ref([]);
+    let listTag: Ref<Tag[]> = ref([]);
     onBeforeMount(async () => {
       if (!isNew()) {
         const res = await store.dispatch(`productsModule/fetchItem`, props.id);
@@ -87,6 +105,10 @@ const Component = defineComponent({
       }
       listCategory.value = await store.dispatch(
         'categoriesModule/fetchAllItems',
+        undefined,
+      );
+      listTag.value = await store.dispatch(
+        'tagsModule/fetchAllItems',
         undefined,
       );
     });
@@ -106,9 +128,17 @@ const Component = defineComponent({
       const getSelectedItem = store.getters['productsModule/selectedItem'];
       return getSelectedItem.name;
     });
+    const selectedTags = computed(() => {
+      return state.entity.tags.map((tagId) => {
+        return listTag.value.find(tag => tag.id === tagId);
+      });
+    });
     const rules = {
       name: [(v: string) => !!v || 'Name is required'],
     };
+    function handleTagChange(selectedItems: Tag[]) {
+      state.entity.tags = selectedItems.map(item => item.id);
+    }
 
     return {
       state,
@@ -116,6 +146,10 @@ const Component = defineComponent({
       rules,
       isNew,
       listCategory,
+      listTag,
+
+      selectedTags,
+      handleTagChange,
     };
   },
 });

@@ -6,6 +6,8 @@ export function getEntityStorePath(entityType: EntityType): string {
       return 'productsModule';
     case EntityType.CATEGORY:
       return 'categoriesModule';
+    case EntityType.TAG:
+      return 'tagsModule';
     default:
       console.error('No entity module matches provided entity type');
       return '';

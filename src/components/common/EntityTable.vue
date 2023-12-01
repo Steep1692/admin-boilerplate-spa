@@ -89,6 +89,14 @@
             <slot> {{ item.columns.price }}$ </slot>
           </template>
 
+          <template #[`item.tags`]="{ item }">
+            <v-chip-group v-for="tagId in item.columns.tags" :key="tagId">
+              <v-chip>
+                <slot name="tagChipContent" :tagId="tagId"></slot>
+              </v-chip>
+            </v-chip-group>
+          </template>
+
           <template #[`item.totalPrice`]="{ item }">
             <slot> {{ item.columns.totalPrice }}$ </slot>
           </template>
