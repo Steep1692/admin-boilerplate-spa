@@ -3,6 +3,7 @@
     entity-type="product"
     :title="title"
     :item="state.entity"
+    :thumbnail="state.thumbnail?.[0]"
     :loading="state.loading"
     :is-new="isNew()"
     :is-deletable="!isNew()"
@@ -10,6 +11,23 @@
     <template #form-content>
       <div>
         <v-row align="start">
+          <v-col cols="12">
+            <v-file-input
+              v-model="state.thumbnail"
+              label="Preview Image"
+              variant="outlined"
+              accept="image/png, image/jpeg"
+              placeholder="Pick a thumbnail image"
+              prepend-icon="mdi-camera"
+              :rules="rules.thumbnail"
+            ></v-file-input>
+          </v-col>
+          <v-col v-if="thumbnailPreviewUrl" cols="12">
+            <img width="100" height="100" :src="thumbnailPreviewUrl" alt="Preview image" />
+            <v-btn icon @click="removeThumbnail">
+              <v-icon>mdi-delete</v-icon>
+            </v-btn>
+          </v-col>
           <v-col cols="12">
             <v-text-field
               v-model="state.entity.name"
@@ -54,6 +72,12 @@ import { defineComponent, onBeforeMount, reactive, watch, computed, ref, Ref } f
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { Product } from '../../../models/entities/Product';
+import { $http } from '../../../api/common/Axios';
+
+const baseUrl = $http.defaults.baseURL;
+
+const MAX_FILE_SIZE_MB = 1;
+const MAX_FILE_SIZE_BYTE = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 interface State {
   entity: Product;
@@ -92,6 +116,7 @@ const Component = defineComponent({
     });
 
     const state = reactive({
+      thumbnail: null,
       entity: product,
       loading: computed(() => store.getters['productsModule/loading']),
     }) as State;
@@ -106,9 +131,22 @@ const Component = defineComponent({
       const getSelectedItem = store.getters['productsModule/selectedItem'];
       return getSelectedItem.name;
     });
+    const thumbnailPreviewUrl = computed(() => {
+      if (state.thumbnail?.length) return URL.createObjectURL(state.thumbnail[0]);
+      if (state.entity.thumbnail) return baseUrl + state.entity.thumbnail;
+      return null;
+    });
     const rules = {
       name: [(v: string) => !!v || 'Name is required'],
+      thumbnail: [
+        (v: File[]) => !v || !v.length || v[0].size < MAX_FILE_SIZE_BYTE || `Preview image size should be less than ${MAX_FILE_SIZE_MB} MB!`
+      ],
     };
+
+    function removeThumbnail() {
+      state.thumbnail = null;
+      state.entity.thumbnail = '';
+    }
 
     return {
       state,
@@ -116,6 +154,10 @@ const Component = defineComponent({
       rules,
       isNew,
       listCategory,
+
+      baseUrl,
+      thumbnailPreviewUrl,
+      removeThumbnail,
     };
   },
 });

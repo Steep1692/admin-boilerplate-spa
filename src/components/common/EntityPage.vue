@@ -132,6 +132,10 @@ const Component = defineComponent({
       type: Object,
       default: () => ({}),
     },
+    thumbnail: {
+      type: File,
+      default: null,
+    },
     title: {
       type: String,
       default: "",
@@ -155,24 +159,66 @@ const Component = defineComponent({
     const router = useRouter();
     const valid = ref(true);
     const storePath = computed(() => getEntityStorePath(props.entityType));
-    function create() {
-      store.dispatch(`${storePath.value}/addItem`, props.item);
-      close();
-    }
 
-    function save() {
-      store.dispatch(`${storePath.value}/updateItem`, props.item);
-      close();
-    }
-
-    function deleteItem(confirmed: boolean) {
-      if (!confirmed) return;
-
-      if (props.item) {
-        const id = props.item.id;
-        store.dispatch(`${storePath.value}/deleteItem`, id);
-        close();
+    async function create() {
+      // Create new item
+      const resultItem = await store.dispatch(`${storePath.value}/addItem`, props.item);
+      if (resultItem instanceof Error) {
+        return;
       }
+
+      // Upload thumbnail
+      const resultUpdate = await store.dispatch(`${storePath.value}/uploadThumbnail`, {
+        itemId: resultItem.id,
+        thumbnailFile: props.thumbnail,
+      });
+      if (resultUpdate instanceof Error) {
+        return;
+      }
+
+      close();
+    }
+
+    async function save() {
+      // Update item
+      const resultUpdate = await store.dispatch(`${storePath.value}/updateItem`, props.item);
+      if (resultUpdate instanceof Error) {
+        return;
+      }
+
+      // Update thumbnail
+      if (resultUpdate.thumbnail !== props.thumbnail) {
+        if (props.thumbnail) {
+          const resultUpload = await store.dispatch(`${storePath.value}/uploadThumbnail`, {
+            itemId: props.item.id,
+            thumbnailFile: props.thumbnail,
+          });
+
+          if (resultUpload instanceof Error) {
+            return;
+          }
+        } else {
+          const resultDelete = await store.dispatch(`${storePath.value}/deleteThumbnail`, props.item.id);
+
+          if (resultDelete instanceof Error) {
+            return;
+          }
+        }
+      }
+
+      close();
+    }
+
+    async function deleteItem(confirmed: boolean) {
+      if (!confirmed || !props.item) return;
+
+      // Delete item
+      const resultDelete = await store.dispatch(`${storePath.value}/deleteItem`, props.item.id);
+      if (resultDelete instanceof Error) {
+        return;
+      }
+
+      close();
     }
 
     function close() {

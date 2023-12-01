@@ -19,6 +19,7 @@ const Component = defineComponent({
 
     const state = reactive({
       headers: [
+        { title: 'Thumbnail', key: 'thumbnail', sortable: false, searchable: false },
         { title: 'Name', key: 'name', sortable: true, searchable: true },
         { title: 'Category ID', key: 'categoryId', sortable: true },
         { title: 'Description', key: 'description', sortable: false },

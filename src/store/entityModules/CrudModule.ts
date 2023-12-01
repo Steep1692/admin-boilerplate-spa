@@ -159,13 +159,15 @@ class CrudModule<Item extends Entity, ItemDTO extends Object>
 
         const item = mapper.mapFromDTO(response);
 
-        commit('updateItem', item);
+        commit('updateItem', item.id, item);
         commit('setSelectedItem', item);
 
         dispatchAlert(AlertColor.SUCCESS, alertData, dispatch);
+        return item;
       } catch (err) {
         console.error(err);
         dispatchAlert(AlertColor.ERROR, alertData, dispatch);
+        return err;
       } finally {
         commit('setLoading', false);
       }
@@ -193,9 +195,11 @@ class CrudModule<Item extends Entity, ItemDTO extends Object>
         commit('setSelectedItem', item);
 
         dispatchAlert(AlertColor.SUCCESS, alertData, dispatch);
+        return item;
       } catch (err) {
         console.error(err);
         dispatchAlert(AlertColor.ERROR, alertData, dispatch);
+        return err;
       } finally {
         commit('setLoading', false);
       }
@@ -240,6 +244,61 @@ class CrudModule<Item extends Entity, ItemDTO extends Object>
           },
           dispatch,
         );
+      } finally {
+        commit('setLoading', false);
+      }
+    },
+
+    async uploadThumbnail({ state, commit, dispatch }, { itemId, thumbnailFile }: { itemId: string; thumbnailFile: File }) {
+      commit('setLoading', true);
+
+      const alertData: AlertMessageData = {
+        entityName: state.entityType,
+        action: 'thumbnail upload',
+        single: true,
+      };
+
+      try {
+        const apiClient = getEntityApiClient(state.entityType);
+        const thumbnailUrl = await apiClient.uploadThumbnail(itemId, thumbnailFile);
+        if (!thumbnailUrl) return null;
+
+        commit('updateItem', itemId, { thumbnail: thumbnailUrl });
+
+        dispatchAlert(AlertColor.SUCCESS, alertData, dispatch);
+
+        return thumbnailUrl;
+      } catch (err) {
+        dispatchAlert(AlertColor.ERROR, alertData, dispatch);
+        return err;
+      } finally {
+        commit('setLoading', false);
+      }
+    },
+
+    async deleteThumbnail({ state, commit, dispatch }, itemId: string) {
+      commit('setLoading', true);
+
+      const alertData: AlertMessageData = {
+        entityName: state.entityType,
+        action: 'thumbnail delete',
+        single: true,
+      };
+
+      try {
+        const apiClient = getEntityApiClient(state.entityType);
+        const response = await apiClient.deleteThumbnail(itemId);
+        if (!response) {
+          return;
+        }
+
+        commit('deleteItem', itemId);
+
+        dispatchAlert(AlertColor.SUCCESS, alertData, dispatch);
+      } catch (err) {
+        console.error(err);
+        dispatchAlert(AlertColor.ERROR, alertData, dispatch);
+        return err;
       } finally {
         commit('setLoading', false);
       }

@@ -8,6 +8,8 @@ export interface ICrudEndpoint<DTO> {
   deleteItem(itemId: number | string): Promise<number>;
   updateItem(itemId: string | undefined, newItem: DTO): Promise<DTO>;
   addItem(item: DTO): Promise<DTO>;
+  uploadThumbnail(itemId: string, file: File): Promise<string>;
+  deleteThumbnail(itemId: string): Promise<void>;
   fetchCount(): Promise<FetchCount>;
 }
 
@@ -42,6 +44,25 @@ export abstract class CrudEndpoint<DTO> implements ICrudEndpoint<DTO> {
     // Fetch updated item in case PUT doesn't return one
     if (response.status >= 200 && response.status < 400 && !response.data)
       return this.fetchItem(itemId);
+    return response.data;
+  }
+
+  public async uploadThumbnail(itemId: string, file: File): Promise<DTO> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    };
+
+    const response = await $http.post(`/${this.entityEndpoint}/${itemId}/thumbnail`, formData, config);
+    return response.data;
+  }
+
+  public async deleteThumbnail(itemId: string): Promise<DTO> {
+    const response = await $http.delete(`/${this.entityEndpoint}/${itemId}/thumbnail`);
     return response.data;
   }
 

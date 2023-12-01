@@ -38,13 +38,17 @@
             <slot :name="header.value" :item="item" />
           </template>
 
-          <template #[`item.previewImage`]="{ item }">
+          <template #[`item.thumbnail`]="{ item }">
             <img
-              :src="item.columns.previewImage"
-              :alt="item.columns.previewImage"
-              width="50"
-              height="50"
+              v-if="item.columns.thumbnail"
+              :src="baseUrl + item.columns.thumbnail"
+              alt="Preview image"
+              style="cursor:pointer;"
+              width="100"
+              height="100"
+              @click="onThumbnailClick(item.columns.thumbnail)"
             />
+            <v-icon v-else style="padding: 10px" :size="100" color="grey-darken-1" icon="mdi-image" />
           </template>
 
           <template #[`item.template`]="{ item }">
@@ -126,6 +130,9 @@ import TableHeader from './TableHeader.vue';
 import Pagination from './Pagination.vue';
 import { VDataTableServer } from 'vuetify/labs/components';
 import Entity from '@/models/entities/Entity';
+import { $http } from '../../api/common/Axios';
+
+const baseUrl = $http.defaults.baseURL;
 
 interface TableOptions {
   itemsPerPage: number;
@@ -226,6 +233,10 @@ const Component = defineComponent({
       return [5, 20, 50, 100];
     }
 
+    function onThumbnailClick(thumbnailUrl) {
+      window.open(baseUrl + thumbnailUrl, '_blank');
+    }
+
     return {
       state,
       showDialog,
@@ -233,6 +244,9 @@ const Component = defineComponent({
       totalPages,
       getDropdownItems,
       setOptions,
+
+      baseUrl,
+      onThumbnailClick,
     };
   },
 });
